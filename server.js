@@ -1,8 +1,8 @@
 require('dotenv').config();           // Loads your .env file (MONGODB_URI, PORT, etc.)
 
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
+const db = require('./config/db');   // Connects to MongoDB (this line must come before creating the app)
 
 // Import the author routes (this line must come after creating the routes folder/file)
 const authorRoutes = require('./routes/authorRoutes');
@@ -12,11 +12,6 @@ const app = express();
 // Middleware (these must come early)
 app.use(cors());                      // Allows Postman, frontend, etc. to connect
 app.use(express.json());              // Lets the server understand JSON in requests
-
-// Connect to MongoDB (using the string from .env)
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log("✅ MongoDB Connected Successfully!"))
-  .catch(err => console.log("❌ MongoDB Connection Error:", err));
 
 // Test route – open http://localhost:5000 in browser to confirm server works
 app.get('/', (req, res) => {
