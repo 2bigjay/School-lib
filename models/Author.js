@@ -14,7 +14,9 @@ const authorSchema = new mongoose.Schema({
     type: Date,
     default: Date.now      // automatically sets current date/time
   }
-});
+},
+{timestamps: true} // automatically adds createdAt and updatedAt fields
+);
 
 // Create the model (this lets us use it later)
 module.exports = mongoose.model('Author', authorSchema);
