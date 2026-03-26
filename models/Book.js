@@ -28,9 +28,8 @@ const bookSchema = new mongoose.Schema({
          type: mongoose.Schema.Types.ObjectId, ref: 'Attendant' // reference to Attendant model
     }
 
-    return
 {timestamps: true} // automatically adds createdAt and updatedAt fields
-);
+});
 
 // Create the model (this lets us use it later)
 module.exports = mongoose.model('Book', bookSchema);
