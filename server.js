@@ -1,31 +1,48 @@
-require('dotenv').config();           // Loads your .env file (MONGODB_URI, PORT, etc.)
-
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
-const db = require('./config/db');   // Connects to MongoDB (this line must come before creating the app)
-
-// Import the author routes (this line must come after creating the routes folder/file)
-const authorRoutes = require('./routes/authorRoutes');
 
 const app = express();
 
-// Middleware (these must come early)
-app.use(cors());                      // Allows Postman, frontend, etc. to connect
-app.use(express.json());              // Lets the server understand JSON in requests
+// Middleware
+app.use(cors());
+app.use(express.json());
 
-// Test route – open http://localhost:5000 in browser to confirm server works
+// ====================== ROUTES ======================
+// Only uncomment routes that you have already created
+
+const bookRoutes = require('./routes/bookRoutes');
+const authorRoutes = require('./routes/authorRoutes');
+const studentRoutes = require('./routes/studentRoutes');
+const attendantRoutes = require('./routes/attendantRoutes');
+
+// ====================== DATABASE CONNECTION ======================
+// Use YOUR own connection string here
+mongoose.connect('mongodb://127.0.0.1:27017/school-lib')   // ← Change if your DB name is different
+    .then(() => console.log('✅ MongoDB Connected Successfully to school-lib'))
+    .catch((err) => console.log('❌ MongoDB Connection Error:', err.message));
+
+// ====================== API ROUTES ======================
+app.use('/api/books', bookRoutes);           // Active
+app.use('/api/authors', authorRoutes);
+app.use('/api/students', studentRoutes);
+app.use('/api/attendants', attendantRoutes);
+
+// Root Route
 app.get('/', (req, res) => {
-  res.send("School Library API is running! 🚀");
+    res.json({
+        message: "School Library Management API is running",
+        version: "1.0.0"
+    });
 });
 
-// IMPORTANT: Add your routes here – AFTER middleware, BEFORE app.listen
-app.use('/authors', authorRoutes);
-// You will add more later, e.g.:
-// app.use('/books', require('./routes/bookRoutes'));
-// app.use('/students', require('./routes/studentRoutes'));
+// 404 Handler
+app.use((req, res) => {
+    res.status(404).json({ message: "Route not found" });
+});
 
-// Start the server (this must be at the bottom)
+// Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`🚀 Server is running on http://localhost:${PORT}`);
 });
