@@ -14,32 +14,47 @@ const createBook = async (req, res) => {
     }
 };
 
-// ==================== GET ALL BOOKS (with Pagination + Search) ====================
+// ==================== GET ALL BOOKS (Pagination + Search + Overdue Check) ====================
 const getAllBooks = async (req, res) => {
     try {
         const { page = 1, limit = 10, search = '' } = req.query;
 
         const query = {};
 
-        // Search by title or author name
         if (search) {
             query.$or = [
-                { title: { $regex: search, $options: 'i' } },           // Search in title
-                { 'authors.name': { $regex: search, $options: 'i' } }   // Search in author names (after populate)
+                { title: { $regex: search, $options: 'i' } },
+                { 'authors.name': { $regex: search, $options: 'i' } }
             ];
         }
 
         const skip = (page - 1) * limit;
 
-        const books = await Book.find(query)
+        let books = await Book.find(query)
             .populate('authors')
             .populate('borrowedBy')
             .populate('issuedBy')
             .skip(skip)
             .limit(parseInt(limit))
-            .sort({ createdAt: -1 });   // Newest first
+            .sort({ createdAt: -1 });
 
         const totalBooks = await Book.countDocuments(query);
+
+        // Add overdue flag to each book
+        books = books.map(book => {
+            let isOverdue = false;
+            if (book.status === 'OUT' && book.returnDate) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const returnDate = new Date(book.returnDate);
+                returnDate.setHours(0, 0, 0, 0);
+
+                if (today > returnDate) {
+                    isOverdue = true;
+                }
+            }
+            return { ...book.toObject(), overdue: isOverdue };
+        });
 
         res.json({
             message: "Books fetched successfully",
@@ -57,7 +72,7 @@ const getAllBooks = async (req, res) => {
     }
 };
 
-// ==================== GET SINGLE BOOK ====================
+// ==================== GET SINGLE BOOK (with Overdue Check) ====================
 const getBookById = async (req, res) => {
     try {
         const book = await Book.findById(req.params.id)
@@ -69,9 +84,23 @@ const getBookById = async (req, res) => {
             return res.status(404).json({ message: "Book not found" });
         }
 
+        // Overdue Check Logic
+        let isOverdue = false;
+        if (book.status === 'OUT' && book.returnDate) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Reset time for fair comparison
+            const returnDate = new Date(book.returnDate);
+            returnDate.setHours(0, 0, 0, 0);
+
+            if (today > returnDate) {
+                isOverdue = true;
+            }
+        }
+
         res.status(200).json({
             message: "Book fetched successfully",
-            book
+            book,
+            overdue: isOverdue
         });
 
     } catch (error) {
@@ -173,6 +202,41 @@ const returnBook = async (req, res) => {
     }
 };
 
+// ==================== SIMPLE LOGIN (Demo) ====================
+const login = async (req, res) => {
+    try {
+        const { username, password } = req.body;
+
+        // Simple demo credentials (In real app, check database)
+        if (username === "admin" && password === "password123") {
+            const token = jwt.sign(
+                { 
+                    id: "admin001", 
+                    role: "library_attendant",
+                    name: "Admin User"
+                },
+                process.env.JWT_SECRET || 'schoollibrary-secret-key-2026',
+                { expiresIn: '7d' }
+            );
+
+            return res.json({
+                message: "Login successful",
+                token: token,
+                user: {
+                    id: "admin001",
+                    name: "Admin User",
+                    role: "library_attendant"
+                }
+            });
+        }
+
+        res.status(401).json({ message: "Invalid username or password" });
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 // ====================== EXPORTS ======================
 module.exports = {
     createBook,
@@ -181,5 +245,6 @@ module.exports = {
     updateBook,
     deleteBook,
     borrowBook,
-    returnBook
+    returnBook,
+    login
 };
