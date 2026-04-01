@@ -1,4 +1,5 @@
 const Book = require('../models/Book');
+const jwt = require('jsonwebtoken');     // ← Add this line
 
 // ==================== CREATE BOOK ====================
 const createBook = async (req, res) => {
