@@ -1,6 +1,10 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+require('dotenv').config();
+
+// Import database configuration
+require('./config/db');
 
 const app = express();
 
@@ -15,12 +19,6 @@ const bookRoutes = require('./routes/bookRoutes');
 const authorRoutes = require('./routes/authorRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const attendantRoutes = require('./routes/attendantRoutes');
-
-// ====================== DATABASE CONNECTION ======================
-// Use YOUR own connection string here
-mongoose.connect('mongodb://127.0.0.1:27017/school-lib')   // ← Change if your DB name is different
-    .then(() => console.log('✅ MongoDB Connected Successfully to school-lib'))
-    .catch((err) => console.log('❌ MongoDB Connection Error:', err.message));
 
 // ====================== API ROUTES ======================
 app.use('/api/books', bookRoutes);           // Active
